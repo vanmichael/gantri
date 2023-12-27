@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:mysecretpassword@localhost:5432/localdb?schema=public"
+}
+
+model Art {
+  // fields
+  id                 Int     @id
+  accessionNumber    String  @map("accession_number")
+  artist             String
+  artistRole         String  @map("artist_role")
+  artistId           Int     @map("artist_id")
+  title              String?
+  dateText           String  @map("date_text")
+  medium             String?
+  creditLine         String? @map("credit_line")
+  year               String?
+  acquisitionYear    String? @map("acquisition_year")
+  dimensions         String?
+  width              String?
+  height             String?
+  depth              String?
+  units              String?
+  inscription        String?
+  thumbnailCopyright String? @map("thumbnail_copyright")
+  thumbnailUrl       String? @map("thumbnail_url")
+  url                String?
+
+  // has relations
+  comments Comment[]
+
+  // raw table name
+  @@map("tate_collection_art_data")
+}
+
+model User {
+  // fields
+  id        String   @id @default(uuid())
+  name      String
+  age       Int
+  location  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // has relations
+  comments Comment[]
+
+  @@map("users")
+}
+
+model Comment {
+  // fields
+  id          Int      @id @default(autoincrement())
+  userId      String?
+  artId       Int
+  name        String
+  nonUserName String?
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // belongs to relations
+  author User? @relation(fields: [userId], references: [id])
+  art    Art  @relation(fields: [artId], references: [id])
+
+  @@unique([nonUserName, artId])
+
+  @@map("comments")
+}
