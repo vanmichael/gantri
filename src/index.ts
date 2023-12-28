@@ -14,7 +14,7 @@ const port = 3000
 app.get('/api/art', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const artWithComments: Art[] = await prisma.art.findMany({ select: { id: true, title: true, artist: true, year: true, comments: { select: { id: true, name: true, content: true, userId: true } } }})
-        const mappedArtWithCommentsAndOptionalUserId: Partial<Art[]> = artWithComments.map((art) => {
+        const mappedArtWithCommentsAndOptionalUserId: Art[] = artWithComments.map((art) => {
             const comments = art.comments.map((comment) => {
                 const partialComment = { id: comment.id, name: comment.name, content: comment.content } as Comment
                 if (comment.userId) partialComment.userId = comment.userId
@@ -132,6 +132,8 @@ app.post('/api/comments', bodyParser.json(), async (req: Request, res: Response,
                 } else {
                     next(err);
                 }
+            } else {
+                next(err)
             }
         }
     }
