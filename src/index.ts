@@ -2,7 +2,7 @@ import express, { Request, Response, ErrorRequestHandler, NextFunction } from "e
 import { PrismaClient, Prisma } from '@prisma/client'
 import bodyParser from "body-parser"
 import Joi from "joi"
-import { excludeNullUserId } from './excludeHelpers'
+import { excludeIfNullFromComment } from './excludeHelpers'
 import { PrismaClientKnownRequestErrorCodes } from './enums'
 import { Art } from './types'
 
@@ -16,7 +16,7 @@ app.get('/api/art', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const artWithComments: Art[] = await prisma.art.findMany({ select: { id: true, title: true, artist: true, year: true, comments: { select: { id: true, name: true, content: true, userId: true } } }})
         const mappedArtWithCommentsAndOptionalUserId: Art[] = artWithComments.map((art) => {
-            art.comments = art.comments.map((comment) => excludeNullUserId(comment))
+            art.comments = art.comments.map((comment) => excludeIfNullFromComment(comment))
             return art
         });
         res.json(mappedArtWithCommentsAndOptionalUserId)
@@ -30,7 +30,7 @@ app.get('/api/art/:id', async (req: Request, res: Response, next: NextFunction) 
     try {
         const id = parseInt(req.params.id)
         const art: Art | null = await prisma.art.findUnique({ where: { id }, select: { id: true, title: true, artist: true, year: true, comments: { select: { id: true, name: true, content: true, userId: true } } } })
-        if (art && art.comments) art.comments = art.comments.map((comment) => excludeNullUserId(comment))
+        if (art && art.comments) art.comments = art.comments.map((comment) => excludeIfNullFromComment(comment))
         res.json(art)
     } catch (err) {
         next(err)
