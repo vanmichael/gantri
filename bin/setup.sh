@@ -9,7 +9,7 @@ docker exec -it postgres_container su - postgres -c "bash -c 'psql -U postgres -
 
 echo "echo copy file to postgres container"
 
-docker cp /Users/vannguyen/src/take_home_projects/gantri/the-tate-collection.csv postgres_container:/usr/src/
+docker cp the-tate-collection.csv postgres_container:/usr/src/
 
 echo "run checked in initial migrations"
 
