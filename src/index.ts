@@ -2,8 +2,9 @@ import express, { Request, Response, ErrorRequestHandler, NextFunction } from "e
 import { PrismaClient, Prisma } from '@prisma/client'
 import bodyParser from "body-parser"
 import Joi from "joi"
+import { excludeNullUserId } from './excludeHelpers'
 import { PrismaClientKnownRequestErrorCodes } from './enums'
-import { Art, Comment } from './types'
+import { Art } from './types'
 
 const { PrismaClientKnownRequestError } = Prisma
 const prisma = new PrismaClient()
@@ -15,12 +16,7 @@ app.get('/api/art', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const artWithComments: Art[] = await prisma.art.findMany({ select: { id: true, title: true, artist: true, year: true, comments: { select: { id: true, name: true, content: true, userId: true } } }})
         const mappedArtWithCommentsAndOptionalUserId: Art[] = artWithComments.map((art) => {
-            const comments = art.comments.map((comment) => {
-                const partialComment = { id: comment.id, name: comment.name, content: comment.content } as Comment
-                if (comment.userId) partialComment.userId = comment.userId
-                return partialComment
-            })
-            art.comments = comments as Comment[]
+            art.comments = art.comments.map((comment) => excludeNullUserId(comment))
             return art
         });
         res.json(mappedArtWithCommentsAndOptionalUserId)
@@ -34,13 +30,7 @@ app.get('/api/art/:id', async (req: Request, res: Response, next: NextFunction) 
     try {
         const id = parseInt(req.params.id)
         const art: Art | null = await prisma.art.findUnique({ where: { id }, select: { id: true, title: true, artist: true, year: true, comments: { select: { id: true, name: true, content: true, userId: true } } } })
-        if (art && art.comments) {
-            art.comments = art.comments.map((comment) => {
-                const partialComment = { id: comment.id, name: comment.name, content: comment.content } as Comment
-                if (comment.userId) partialComment.userId = comment.userId
-                return partialComment
-            }) as Comment[]
-        }
+        if (art && art.comments) art.comments = art.comments.map((comment) => excludeNullUserId(comment))
         res.json(art)
     } catch (err) {
         next(err)
